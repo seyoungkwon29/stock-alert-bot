@@ -283,5 +283,6 @@ def format_surge_report(date_str: str, results: list[dict]) -> str:
             lines.append(f"   • {note}")
         lines.append("")
 
+    lines.append("💡 다크풀/공매도 상세 → 자세히 보기 클릭")
     lines.append("⚠️ 교육용 참고 자료이며 투자 권유가 아닙니다.")
     return "\n".join(lines)

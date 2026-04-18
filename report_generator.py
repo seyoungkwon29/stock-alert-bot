@@ -41,6 +41,9 @@ TEMPLATE = """\
   .nav {{ display: flex; gap: 8px; margin-bottom: 16px; }}
   .nav a {{ color: #60a5fa; text-decoration: none; font-size: 0.9rem; padding: 6px 12px; border: 1px solid #333; border-radius: 8px; }}
   .nav a:hover {{ background: #1a1a2e; }}
+  .darkfina {{ display: flex; gap: 6px; margin-top: 8px; }}
+  .darkfina a {{ color: #a78bfa; text-decoration: none; font-size: 0.75rem; padding: 3px 8px; border: 1px solid #3a3a5a; border-radius: 6px; }}
+  .darkfina a:hover {{ background: #2a2a4a; }}
 </style>
 </head>
 <body>
@@ -70,6 +73,17 @@ def _score_class(score: int) -> str:
     return "score-neu"
 
 
+def _darkfina_links(ticker: str, market: str) -> str:
+    """미국 종목에 대해 DarkFina 바로가기 링크 생성."""
+    if market != "US":
+        return ""
+    base = "https://darkfina.crazyrabbit.co"
+    return f"""<div class="darkfina">
+    <a href="{base}/darkpool/{ticker}" target="_blank">🌑 다크풀</a>
+    <a href="{base}/short/{ticker}" target="_blank">📉 공매도</a>
+  </div>"""
+
+
 def _render_analysis_cards(alerts: list[dict]) -> str:
     """기술적 분석 결과 카드."""
     if not alerts:
@@ -78,6 +92,7 @@ def _render_analysis_cards(alerts: list[dict]) -> str:
     for a in alerts:
         flag = "🇰🇷" if a["market"] == "KR" else "🇺🇸"
         notes_html = "".join(f'<div class="note">• {n}</div>' for n in a["notes"])
+        darkfina = _darkfina_links(a["ticker"], a["market"])
         html += f"""
 <div class="card">
   <div class="card-header">
@@ -86,6 +101,7 @@ def _render_analysis_cards(alerts: list[dict]) -> str:
   </div>
   <div class="price">종가 {a['last_close']:,.2f} <span class="{_change_class(a['change_pct'])}">({a['change_pct']:+.2f}%)</span></div>
   {notes_html}
+  {darkfina}
 </div>"""
     return html
 
@@ -100,6 +116,7 @@ def _render_surge_cards(results: list[dict]) -> str:
         medal = medals[i] if i < 3 else f"{i+1}."
         short_html = f'<span class="short-badge">공매도 {r["short_pct"]:.1f}%</span>' if r.get("short_pct", 0) > 0 else ""
         notes_html = "".join(f'<div class="note">• {n}</div>' for n in r["notes"])
+        darkfina = _darkfina_links(r["ticker"], "US")
         html += f"""
 <div class="card">
   <div class="card-header">
@@ -108,6 +125,7 @@ def _render_surge_cards(results: list[dict]) -> str:
   </div>
   <div class="price">종가 ${r['last_close']:,.2f} <span class="{_change_class(r['change_pct'])}">({r['change_pct']:+.1f}%)</span> {short_html}</div>
   {notes_html}
+  {darkfina}
 </div>"""
     return html
 
