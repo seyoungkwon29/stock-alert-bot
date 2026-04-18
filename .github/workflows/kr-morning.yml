@@ -3,9 +3,12 @@ name: 🇰🇷 한국 주식 분석 (평일 오전 7시)
 on:
   schedule:
     # 한국시간 평일 오전 7:00 = UTC 22:00 (전날)
-    # UTC 기준 일~목 22:00 = KST 월~금 07:00
     - cron: "0 22 * * 0-4"
-  workflow_dispatch:  # 수동 실행 가능
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
 
 jobs:
   analyze:
@@ -32,14 +35,13 @@ jobs:
       - name: Run Korean stock analysis
         run: python main.py --all --market kr
 
-      - name: Update tokens if refreshed
-        if: always()
+      - name: Deploy reports to GitHub Pages
         run: |
-          if [ -f .env ]; then
-            ACCESS=$(grep KAKAO_ACCESS_TOKEN .env | cut -d= -f2)
-            REFRESH=$(grep KAKAO_REFRESH_TOKEN .env | cut -d= -f2)
-            if [ -n "$ACCESS" ] && [ "$ACCESS" != "${{ secrets.KAKAO_ACCESS_TOKEN }}" ]; then
-              echo "⚠️ 토큰이 갱신되었습니다. GitHub Secrets를 수동 업데이트 해주세요."
-              echo "ACCESS_TOKEN=$ACCESS"
-            fi
-          fi
+          cd reports
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b gh-pages
+          git add -A
+          git commit -m "Update KR report $(date +%Y-%m-%d)"
+          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages

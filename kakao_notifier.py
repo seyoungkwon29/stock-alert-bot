@@ -94,12 +94,17 @@ def refresh_access_token() -> str | None:
 # -------------------------------------------------------------
 # 실제 메시지 전송
 # -------------------------------------------------------------
-def _send(text: str, access_token: str) -> tuple[bool, int]:
+def _send(text: str, access_token: str, link_url: str = "") -> tuple[bool, int]:
     """memo API 호출. (성공 여부, HTTP 코드) 반환."""
+    url = link_url or "https://tossinvest.com"
     template = {
         "object_type": "text",
         "text": text[:3900],  # 카카오는 4000자 제한
-        "link": {},
+        "link": {
+            "web_url": url,
+            "mobile_web_url": url,
+        },
+        "button_title": "자세히 보기",
     }
     data = urllib.parse.urlencode({
         "template_object": json.dumps(template, ensure_ascii=False),
@@ -128,7 +133,7 @@ def _send(text: str, access_token: str) -> tuple[bool, int]:
         return False, 0
 
 
-def send_kakao(message: str) -> bool:
+def send_kakao(message: str, link_url: str = "") -> bool:
     """카카오 '나에게' 메시지 전송. 토큰 만료 시 1회 자동 갱신 후 재시도."""
     token = os.getenv("KAKAO_ACCESS_TOKEN")
     if not token:
@@ -136,7 +141,7 @@ def send_kakao(message: str) -> bool:
         print(message)
         return False
 
-    ok, code = _send(message, token)
+    ok, code = _send(message, token, link_url)
     if ok:
         return True
 
@@ -145,7 +150,7 @@ def send_kakao(message: str) -> bool:
         print("[kakao] 액세스 토큰 만료, 자동 갱신 시도...")
         new_token = refresh_access_token()
         if new_token:
-            ok, _ = _send(message, new_token)
+            ok, _ = _send(message, new_token, link_url)
             if ok:
                 print("[kakao] 갱신 후 전송 성공")
             return ok

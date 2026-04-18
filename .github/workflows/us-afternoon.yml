@@ -4,7 +4,11 @@ on:
   schedule:
     # 한국시간 평일 오후 5:30 = UTC 08:30
     - cron: "30 8 * * 1-5"
-  workflow_dispatch:  # 수동 실행 가능
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
 
 jobs:
   analyze:
@@ -31,14 +35,18 @@ jobs:
       - name: Run US stock analysis + surge screener
         run: python main.py --all --market us
 
-      - name: Update tokens if refreshed
-        if: always()
+      - name: Deploy reports to GitHub Pages
         run: |
-          if [ -f .env ]; then
-            ACCESS=$(grep KAKAO_ACCESS_TOKEN .env | cut -d= -f2)
-            REFRESH=$(grep KAKAO_REFRESH_TOKEN .env | cut -d= -f2)
-            if [ -n "$ACCESS" ] && [ "$ACCESS" != "${{ secrets.KAKAO_ACCESS_TOKEN }}" ]; then
-              echo "⚠️ 토큰이 갱신되었습니다. GitHub Secrets를 수동 업데이트 해주세요."
-              echo "ACCESS_TOKEN=$ACCESS"
-            fi
-          fi
+          cd reports
+          # 기존 gh-pages에서 kr.html 보존
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git
+          git fetch origin gh-pages || true
+          git checkout -b gh-pages
+          # 기존 KR 리포트가 있으면 가져오기
+          git checkout origin/gh-pages -- kr.html 2>/dev/null || true
+          git add -A
+          git commit -m "Update US report $(date +%Y-%m-%d)"
+          git push -f origin gh-pages

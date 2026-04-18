@@ -4,6 +4,7 @@
 1. config.py 에 정의된 한국/미국 종목 데이터 수집
 2. 지표 계산 및 신호 분석
 3. 임계값을 넘는 종목만 카카오톡 '나에게' 로 알림 전송
+4. HTML 리포트 생성 (GitHub Pages 배포용)
 
 실행:
     python main.py                # 임계값 통과 종목만 알림
@@ -28,6 +29,7 @@ from indicators import compute_all
 from signals import analyze
 from kakao_notifier import send_kakao, format_report
 from surge_screener import run_surge_screen, format_surge_report
+from report_generator import generate_kr_report, generate_us_report, generate_index
 
 
 def run(send_all: bool = False, dry_run: bool = False, market: str | None = None) -> int:
@@ -73,12 +75,30 @@ def run(send_all: bool = False, dry_run: bool = False, market: str | None = None
     alerts.sort(key=lambda x: abs(x["score"]), reverse=True)
 
     # 미국 시장인 경우 급등 후보 스크리너도 함께 실행
+    surge_results = []
     surge_msg = ""
     if market == "us" or market is None:
         print(f"\n{'='*60}")
         print("급등 후보 스크리너 실행 중...\n")
         surge_results = run_surge_screen(config)
         surge_msg = "\n\n" + format_surge_report(today, surge_results)
+
+    # HTML 리포트 생성
+    report_url = ""
+    if market == "kr":
+        report_url = generate_kr_report(today, alerts)
+        generate_index(today)
+        print(f"\n📄 HTML 리포트: {report_url}")
+    elif market == "us":
+        report_url = generate_us_report(today, alerts, surge_results)
+        generate_index(today)
+        print(f"\n📄 HTML 리포트: {report_url}")
+    else:
+        kr_alerts = [a for a in alerts if a["market"] == "KR"]
+        us_alerts = [a for a in alerts if a["market"] == "US"]
+        generate_kr_report(today, kr_alerts)
+        report_url = generate_us_report(today, us_alerts, surge_results)
+        generate_index(today)
 
     message = format_report(today, alerts) + surge_msg
     print("\n" + "=" * 60)
@@ -89,7 +109,7 @@ def run(send_all: bool = False, dry_run: bool = False, market: str | None = None
         print("[dry-run] 카카오 전송 생략")
         return 0
 
-    ok = send_kakao(message)
+    ok = send_kakao(message, link_url=report_url)
     print("✅ 전송 성공" if ok else "❌ 전송 실패")
     return 0 if ok or not alerts else 1
 
