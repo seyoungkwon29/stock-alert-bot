@@ -11,60 +11,52 @@
 <title>📈 Stock Alert Bot</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 16px; max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 1.3rem; margin-bottom: 16px; color: #fff; }
-  .timestamp { color: #888; font-size: 0.85rem; margin-bottom: 20px; }
-  .card { background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #2a2a2a; }
-  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .ticker { font-weight: 700; font-size: 1.1rem; color: #fff; }
-  .score-pos { color: #22c55e; font-weight: 700; }
-  .score-neg { color: #ef4444; font-weight: 700; }
-  .score-neu { color: #888; font-weight: 700; }
-  .price { font-size: 0.95rem; color: #aaa; margin-bottom: 8px; }
-  .change-pos { color: #22c55e; }
-  .change-neg { color: #ef4444; }
-  .note { font-size: 0.85rem; color: #bbb; padding: 2px 0; }
-  .medal { font-size: 1.2rem; margin-right: 4px; }
-  .section { margin-top: 24px; margin-bottom: 12px; font-size: 1.1rem; font-weight: 700; color: #fff; border-bottom: 1px solid #333; padding-bottom: 8px; }
-  .short-badge { background: #7c3aed; color: #fff; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
-  .footer { text-align: center; color: #666; font-size: 0.8rem; margin-top: 24px; padding: 16px 0; border-top: 1px solid #222; }
-  .nav { display: flex; gap: 8px; margin-bottom: 16px; }
-  .nav a { color: #60a5fa; text-decoration: none; font-size: 0.9rem; padding: 6px 12px; border: 1px solid #333; border-radius: 8px; }
-  .nav a:hover { background: #1a1a2e; }
-  .darkfina { display: flex; gap: 6px; margin-top: 8px; }
-  .darkfina a { color: #a78bfa; text-decoration: none; font-size: 0.75rem; padding: 3px 8px; border: 1px solid #3a3a5a; border-radius: 6px; }
-  .darkfina a:hover { background: #2a2a4a; }
+  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 16px; max-width: 640px; margin: 0 auto; min-height: 100vh; }
+  h1 { font-size: 1.4rem; margin-bottom: 8px; color: #fff; }
+  .sub { color: #888; font-size: 0.85rem; margin-bottom: 24px; }
+  .card { background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #2a2a2a; text-decoration: none; display: block; transition: border-color 0.2s; }
+  .card:hover { border-color: #444; }
+  .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+  .card-desc { font-size: 0.85rem; color: #888; }
+  .kr .card-title { color: #60a5fa; }
+  .us .card-title { color: #60a5fa; }
+  .pre .card-title { color: #f97316; }
+  .live .card-title { color: #f97316; }
+  .footer { text-align: center; color: #555; font-size: 0.8rem; margin-top: 32px; padding: 16px 0; border-top: 1px solid #222; }
+  .badge { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 8px; margin-left: 8px; }
+  .badge-time { background: #1e3a5f; color: #60a5fa; }
 </style>
 </head>
 <body>
-<div class="nav">
-  <a href="index.html">홈</a>
-  <a href="kr.html">🇰🇷 한국</a>
-  <a href="us.html">🇺🇸 미국</a>
-  <a href="surge-pre.html">🔥 급등주(프리)</a>
-  <a href="surge-live.html">🔥 급등주(본장)</a>
-</div>
+
 <h1>📈 Stock Alert Bot</h1>
-<div class="timestamp">최종 업데이트: 2026-04-20</div>
+<p class="sub">한국·미국 주식 기술적 분석 + 급등주 스크리너</p>
 
-<div class="card">
-  <a href="kr.html" style="color:#60a5fa;text-decoration:none;font-size:1.1rem;">🇰🇷 한국 주식 분석 →</a>
-  <div class="note">평일 오전 7시 업데이트</div>
-</div>
-<div class="card">
-  <a href="us.html" style="color:#60a5fa;text-decoration:none;font-size:1.1rem;">🇺🇸 미국 주식 분석 →</a>
-  <div class="note">평일 오후 5시 업데이트</div>
-</div>
-<div class="card">
-  <a href="surge-pre.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 (프리마켓) →</a>
-  <div class="note">평일 오후 6시 · 7시 시간대별 순위</div>
-</div>
-<div class="card">
-  <a href="surge-live.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 (본장) →</a>
-  <div class="note">평일 오후 11시 업데이트</div>
+<a class="card kr" href="/kr.html">
+  <div class="card-title">🇰🇷 한국 주식 분석 <span class="badge badge-time">매일 오전 7시</span></div>
+  <div class="card-desc">SMA, RSI, 볼린저밴드, MACD 기술적 분석</div>
+</a>
+
+<a class="card us" href="/us.html">
+  <div class="card-title">🇺🇸 미국 주식 분석 <span class="badge badge-time">매일 오후 5시</span></div>
+  <div class="card-desc">기술적 분석 + DarkFina 다크풀/공매도 링크</div>
+</a>
+
+<a class="card pre" href="/surge-pre.html">
+  <div class="card-title">🔥 급등주 (프리마켓) <span class="badge badge-time">오후 6시 · 7시</span></div>
+  <div class="card-desc">프리마켓 실시간 데이터 · 시간대별 순위 비교</div>
+</a>
+
+<a class="card live" href="/surge-live.html">
+  <div class="card-title">🔥 급등주 (본장) <span class="badge badge-time">오후 11시</span></div>
+  <div class="card-desc">본장 개시 후 실시간 분석 · 30분 모멘텀</div>
+</a>
+
+<div class="footer">
+  ⚠️ 교육용 참고 자료이며 투자 권유가 아닙니다.<br>
+  홈 화면에 추가하면 앱처럼 사용할 수 있습니다.
 </div>
 
-<div class="footer">⚠️ 교육용 참고 자료이며 투자 권유가 아닙니다.</div>
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>
