@@ -7,8 +7,11 @@ set -e
 COMMIT_MSG="${1:-Update reports}"
 REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/seyoungkwon29/stock-alert-bot.git"
 
-# 기존 gh-pages 클론
-git clone --branch gh-pages --single-branch "$REPO_URL" gh-pages-dir 2>/dev/null || mkdir gh-pages-dir
+# 기존 gh-pages 클론 (이미 있으면 재사용)
+if [ ! -d "gh-pages-dir/.git" ]; then
+  rm -rf gh-pages-dir
+  git clone --branch gh-pages --single-branch "$REPO_URL" gh-pages-dir 2>/dev/null || mkdir -p gh-pages-dir
+fi
 
 # 리포트 파일 복사
 cp reports/*.html gh-pages-dir/ 2>/dev/null || true
