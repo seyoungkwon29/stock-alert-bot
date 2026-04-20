@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>📈 Stock Alert Bot</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 16px; max-width: 640px; margin: 0 auto; min-height: 100vh; }
+  h1 { font-size: 1.4rem; margin-bottom: 8px; color: #fff; }
+  .sub { color: #888; font-size: 0.85rem; margin-bottom: 24px; }
+  .card { background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #2a2a2a; text-decoration: none; display: block; transition: border-color 0.2s; }
+  .card:hover { border-color: #444; }
+  .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+  .card-desc { font-size: 0.85rem; color: #888; }
+  .kr .card-title { color: #60a5fa; }
+  .us .card-title { color: #60a5fa; }
+  .pre .card-title { color: #f97316; }
+  .live .card-title { color: #f97316; }
+  .footer { text-align: center; color: #555; font-size: 0.8rem; margin-top: 32px; padding: 16px 0; border-top: 1px solid #222; }
+  .badge { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 8px; margin-left: 8px; }
+  .badge-time { background: #1e3a5f; color: #60a5fa; }
+</style>
+</head>
+<body>
+
+<h1>📈 Stock Alert Bot</h1>
+<p class="sub">한국·미국 주식 기술적 분석 + 급등주 스크리너</p>
+
+<a class="card kr" href="https://seyoungkwon29.github.io/stock-alert-bot/kr.html">
+  <div class="card-title">🇰🇷 한국 주식 분석 <span class="badge badge-time">매일 오전 7시</span></div>
+  <div class="card-desc">SMA, RSI, 볼린저밴드, MACD 기술적 분석</div>
+</a>
+
+<a class="card us" href="https://seyoungkwon29.github.io/stock-alert-bot/us.html">
+  <div class="card-title">🇺🇸 미국 주식 분석 <span class="badge badge-time">매일 오후 5시</span></div>
+  <div class="card-desc">기술적 분석 + DarkFina 다크풀/공매도 링크</div>
+</a>
+
+<a class="card pre" href="https://seyoungkwon29.github.io/stock-alert-bot/surge-pre.html">
+  <div class="card-title">🔥 급등주 (프리마켓) <span class="badge badge-time">오후 6시 · 7시</span></div>
+  <div class="card-desc">프리마켓 실시간 데이터 · 시간대별 순위 비교</div>
+</a>
+
+<a class="card live" href="https://seyoungkwon29.github.io/stock-alert-bot/surge-live.html">
+  <div class="card-title">🔥 급등주 (본장) <span class="badge badge-time">오후 11시</span></div>
+  <div class="card-desc">본장 개시 후 실시간 분석 · 30분 모멘텀</div>
+</a>
+
+<div class="footer">
+  ⚠️ 교육용 참고 자료이며 투자 권유가 아닙니다.<br>
+  홈 화면에 추가하면 앱처럼 사용할 수 있습니다.
+</div>
+
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>
