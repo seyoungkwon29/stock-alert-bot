@@ -51,6 +51,8 @@ TEMPLATE = """\
   <a href="index.html">홈</a>
   <a href="kr.html">🇰🇷 한국</a>
   <a href="us.html">🇺🇸 미국</a>
+  <a href="surge1.html">🔥 급등주1</a>
+  <a href="surge2.html">🔥 급등주2</a>
 </div>
 <h1>{title}</h1>
 <div class="timestamp">{timestamp}</div>
@@ -193,15 +195,42 @@ def generate_us_report(date_str: str, alerts: list[dict], surge_results: list[di
     return f"{PAGES_URL}/us.html"
 
 
+def generate_surge_report(date_str: str, surge_results: list[dict], phase: int = 1, out_dir: str = "reports") -> str:
+    """급등주 HTML 리포트 생성 (phase 1 or 2)."""
+    Path(out_dir).mkdir(exist_ok=True)
+    label = "1차 분석" if phase == 1 else "2차 흐름 업데이트"
+    surge_html = _render_surge_cards(surge_results)
+    content = f'<div class="section">🔥 급등 예상 TOP {len(surge_results)} ({label})</div>{surge_html}'
+    html = TEMPLATE.format(
+        title=f"🔥 {date_str} 급등주 {label}",
+        timestamp=f"생성: {date_str}",
+        content=content,
+    )
+    filename = f"surge{phase}.html"
+    path = Path(out_dir) / filename
+    path.write_text(html, encoding="utf-8")
+    return f"{PAGES_URL}/{filename}"
+
+
 def generate_index(date_str: str, out_dir: str = "reports") -> None:
     """인덱스 페이지 생성."""
     Path(out_dir).mkdir(exist_ok=True)
     content = """
 <div class="card">
   <a href="kr.html" style="color:#60a5fa;text-decoration:none;font-size:1.1rem;">🇰🇷 한국 주식 분석 →</a>
+  <div class="note">평일 오전 7시 업데이트</div>
 </div>
 <div class="card">
-  <a href="us.html" style="color:#60a5fa;text-decoration:none;font-size:1.1rem;">🇺🇸 미국 주식 분석 + 급등 후보 →</a>
+  <a href="us.html" style="color:#60a5fa;text-decoration:none;font-size:1.1rem;">🇺🇸 미국 주식 분석 →</a>
+  <div class="note">평일 오후 5시 업데이트</div>
+</div>
+<div class="card">
+  <a href="surge1.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 1차 분석 →</a>
+  <div class="note">평일 오후 6시 업데이트</div>
+</div>
+<div class="card">
+  <a href="surge2.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 2차 흐름 업데이트 →</a>
+  <div class="note">평일 오후 7시 업데이트</div>
 </div>
 """
     html = TEMPLATE.format(

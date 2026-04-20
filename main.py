@@ -30,7 +30,7 @@ from indicators import compute_all
 from signals import analyze
 from kakao_notifier import send_kakao, format_report
 from surge_screener import run_surge_screen, format_surge_report
-from report_generator import generate_kr_report, generate_us_report, generate_index
+from report_generator import generate_kr_report, generate_us_report, generate_surge_report, generate_index
 from weekly_analysis import run_weekly_analysis, format_weekly_report
 
 
@@ -80,14 +80,8 @@ def run(send_all: bool = False, dry_run: bool = False, market: str | None = None
 
     alerts.sort(key=lambda x: abs(x["score"]), reverse=True)
 
-    # 미국 시장인 경우 급등 후보 스크리너도 함께 실행
     surge_results = []
     surge_msg = ""
-    if market == "us" or market is None:
-        print(f"\n{'='*60}")
-        print("급등 후보 스크리너 실행 중...\n")
-        surge_results = run_surge_screen(config)
-        surge_msg = "\n\n" + format_surge_report(today, surge_results)
 
     # 월요일: 주간 분석 추가
     weekly_msg = ""
@@ -160,15 +154,26 @@ def test_kakao() -> int:
     return 0 if ok else 1
 
 
-def run_surge(dry_run: bool = False, top_n: int | None = None) -> int:
-    """급등 후보 스크리너 실행."""
+def run_surge(dry_run: bool = False, top_n: int | None = None, phase: int = 1) -> int:
+    """급등 후보 스크리너 실행 (phase 1: 1차 분석, phase 2: 2차 흐름 업데이트)."""
     load_dotenv()
     today = datetime.now().strftime("%Y-%m-%d")
+    label = "1차 분석" if phase == 1 else "2차 흐름 업데이트"
 
-    print(f"🔍 {today} 급등 후보 스크리너 시작\n")
+    print(f"🔍 {today} 급등주 {label} 시작\n")
     results = run_surge_screen(config, top_n)
 
+    # HTML 리포트 생성
+    report_url = generate_surge_report(today, results, phase=phase)
+    generate_index(today)
+    print(f"\n📄 HTML 리포트: {report_url}")
+
     message = format_surge_report(today, results)
+    # 헤더를 phase에 맞게 수정
+    message = message.replace(
+        f"급등 후보 TOP {len(results)}",
+        f"급등주 {label} TOP {len(results)}"
+    )
     print("\n" + "=" * 60)
     print(message)
     print("=" * 60 + "\n")
@@ -177,7 +182,7 @@ def run_surge(dry_run: bool = False, top_n: int | None = None) -> int:
         print("[dry-run] 카카오 전송 생략")
         return 0
 
-    ok = send_kakao(message)
+    ok = send_kakao(message, link_url=report_url)
     print("✅ 전송 성공" if ok else "❌ 전송 실패")
     return 0 if ok else 1
 
@@ -188,11 +193,12 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true", help="전송 없이 콘솔만")
     parser.add_argument("--test", action="store_true", help="더미 메시지로 카카오 테스트")
     parser.add_argument("--surge", action="store_true", help="급등 후보 스크리너만")
+    parser.add_argument("--surge-phase", type=int, choices=[1, 2], default=1, help="급등주 분석 단계 (1=1차, 2=2차)")
     parser.add_argument("--top", type=int, default=None, help="급등 후보 상위 N개 (기본 10)")
     parser.add_argument("--market", choices=["kr", "us"], help="한국(kr) 또는 미국(us) 종목만")
     args = parser.parse_args()
     if args.test:
         sys.exit(test_kakao())
     if args.surge:
-        sys.exit(run_surge(dry_run=args.dry_run, top_n=args.top))
+        sys.exit(run_surge(dry_run=args.dry_run, top_n=args.top, phase=args.surge_phase))
     sys.exit(run(send_all=args.all, dry_run=args.dry_run, market=args.market))

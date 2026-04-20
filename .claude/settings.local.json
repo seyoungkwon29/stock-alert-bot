@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import dotenv, requests, pandas, numpy; print\\('core deps OK'\\)\")",
+      "Bash(pip3 install:*)",
+      "WebFetch(domain:fintel.io)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh workflow:*)",
+      "Bash(gh run:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:developers.kakao.com)",
+      "WebFetch(domain:devtalk.kakao.com)",
+      "WebFetch(domain:darkfina.crazyrabbit.co)"
+    ]
+  }
+}
