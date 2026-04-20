@@ -16,7 +16,8 @@
       "Bash(npm list:*)",
       "Bash(vercel whoami:*)",
       "Bash(vercel link:*)",
-      "Bash(vercel --yes --prod)"
+      "Bash(vercel --yes --prod)",
+      "Bash(gh secret:*)"
     ]
   }
 }

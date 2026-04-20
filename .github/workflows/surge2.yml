@@ -44,4 +44,6 @@ jobs:
       - name: Deploy reports to GitHub Pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
         run: bash .github/deploy.sh "Update surge-pre report $(date +%Y-%m-%d_%H%M)"
