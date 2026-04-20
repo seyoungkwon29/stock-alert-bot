@@ -20,9 +20,10 @@
 import argparse
 import sys
 import traceback
-from datetime import datetime
 
 from dotenv import load_dotenv
+
+import kst
 
 import config
 from data_fetcher import fetch
@@ -39,12 +40,12 @@ from weekly_analysis import run_weekly_analysis, format_weekly_report
 
 
 def _is_monday() -> bool:
-    return datetime.now().weekday() == 0
+    return kst.now().weekday() == 0
 
 
 def run(send_all: bool = False, dry_run: bool = False, market: str | None = None) -> int:
     load_dotenv()
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = kst.today_str()
 
     targets = []
     if market is None or market == "kr":
@@ -149,7 +150,7 @@ def test_kakao() -> int:
             "🟢 MACD 상향전환",
         ],
     }]
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = kst.today_str()
     msg = format_report(today, sample)
     print(msg)
     print()
@@ -161,8 +162,8 @@ def test_kakao() -> int:
 def run_surge_pre(dry_run: bool = False, top_n: int | None = None) -> int:
     """급등주(프리마켓) 스크리너. 시간대별로 누적 저장."""
     load_dotenv()
-    today = datetime.now().strftime("%Y-%m-%d")
-    now_ts = datetime.now().strftime("%H:%M")
+    today = kst.today_str()
+    now_ts = kst.time_str()
     top_n = top_n or 10
 
     print(f"🔥 {today} {now_ts} 프리마켓 급등주 분석 시작\n")
@@ -211,7 +212,7 @@ def run_surge_pre(dry_run: bool = False, top_n: int | None = None) -> int:
 def run_surge_live(dry_run: bool = False, top_n: int | None = None) -> int:
     """급등주(본장) 스크리너."""
     load_dotenv()
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = kst.today_str()
     top_n = top_n or 10
 
     print(f"🔥 {today} 본장 급등주 분석 시작\n")

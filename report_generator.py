@@ -11,6 +11,7 @@ from pathlib import Path
 
 
 import os
+import kst
 PAGES_URL = os.getenv("PAGES_URL", "https://trading-zerob.vercel.app")
 
 TEMPLATE = """\
@@ -174,7 +175,7 @@ def generate_kr_report(date_str: str, alerts: list[dict], out_dir: str = "report
             content += f'<div class="section">📅 주간 리뷰 + 금주 강세 예상</div>{weekly_html}'
     html = TEMPLATE.format(
         title=f"📊 {date_str} 한국 주식 분석",
-        timestamp=f"생성: {date_str}",
+        timestamp=f"최종 업데이트: {kst.timestamp_str()} KST",
         content=content,
     )
     path = Path(out_dir) / "kr.html"
@@ -194,7 +195,7 @@ def generate_us_report(date_str: str, alerts: list[dict], surge_results: list[di
             content += f'<div class="section">📅 주간 리뷰 + 금주 강세 예상</div>{weekly_html}'
     html = TEMPLATE.format(
         title=f"📊 {date_str} 미국 주식 분석",
-        timestamp=f"생성: {date_str}",
+        timestamp=f"최종 업데이트: {kst.timestamp_str()} KST",
         content=content,
     )
     path = Path(out_dir) / "us.html"
@@ -237,9 +238,10 @@ def generate_surge_pre_report(date_str: str, time_slots: list[dict], out_dir: st
         content += f'<div class="section">🔥 {ts} 프리마켓 분석 (TOP {len(results)})</div>{cards}'
     if not time_slots:
         content = '<div class="card"><p>아직 분석 데이터가 없습니다.</p></div>'
+    last_time = time_slots[-1]["time"] if time_slots else ""
     html = TEMPLATE.format(
         title=f"🔥 {date_str} 급등주 (프리마켓)",
-        timestamp=f"최종 업데이트: {date_str}",
+        timestamp=f"최종 업데이트: {kst.today_str()} {last_time} KST",
         content=content,
     )
     path = Path(out_dir) / "surge-pre.html"
@@ -254,7 +256,7 @@ def generate_surge_live_report(date_str: str, results: list[dict], out_dir: str 
     content = f'<div class="section">🔥 본장 급등주 TOP {len(results)}</div>{cards}'
     html = TEMPLATE.format(
         title=f"🔥 {date_str} 급등주 (본장)",
-        timestamp=f"생성: {date_str}",
+        timestamp=f"최종 업데이트: {kst.timestamp_str()} KST",
         content=content,
     )
     path = Path(out_dir) / "surge-live.html"
@@ -285,7 +287,7 @@ def generate_index(date_str: str, out_dir: str = "reports") -> None:
 """
     html = TEMPLATE.format(
         title="📈 Stock Alert Bot",
-        timestamp=f"최종 업데이트: {date_str}",
+        timestamp=f"최종 업데이트: {kst.timestamp_str()} KST",
         content=content,
     )
     path = Path(out_dir) / "index.html"
