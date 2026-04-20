@@ -2,10 +2,24 @@
   "buildCommand": null,
   "outputDirectory": "public",
   "framework": null,
+  "functions": {
+    "api/surge.py": {
+      "runtime": "@vercel/python",
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
+    { "source": "/api/surge", "destination": "/api/surge" },
     { "source": "/(.*)", "destination": "/$1" }
   ],
   "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=30" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [

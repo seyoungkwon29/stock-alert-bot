@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>🔥 실시간 급등주 분석</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Pretendard', sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 16px; max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; color: #fff; }
+  .timestamp { color: #888; font-size: 0.85rem; margin-bottom: 16px; }
+  .nav { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .nav a { color: #60a5fa; text-decoration: none; font-size: 0.85rem; padding: 6px 10px; border: 1px solid #333; border-radius: 8px; }
+  .nav a:hover { background: #1a1a2e; }
+  .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 20px; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; }
+  .btn-primary:hover { opacity: 0.9; transform: scale(0.99); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .section { margin-top: 20px; margin-bottom: 10px; font-size: 1.05rem; font-weight: 700; color: #fff; border-bottom: 1px solid #333; padding-bottom: 6px; }
+  .card { background: #1a1a1a; border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid #2a2a2a; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .ticker { font-weight: 700; font-size: 1rem; color: #fff; }
+  .score { color: #22c55e; font-weight: 700; }
+  .price { font-size: 0.9rem; color: #aaa; margin-bottom: 6px; }
+  .change-pos { color: #22c55e; }
+  .change-neg { color: #ef4444; }
+  .note { font-size: 0.82rem; color: #bbb; padding: 1px 0; }
+  .medal { font-size: 1.1rem; margin-right: 4px; }
+  .loading { text-align: center; padding: 40px; color: #888; }
+  .loading .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid #333; border-top: 3px solid #f97316; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 24px; color: #666; }
+  .darkfina { display: flex; gap: 6px; margin-top: 6px; }
+  .darkfina a { color: #a78bfa; text-decoration: none; font-size: 0.72rem; padding: 2px 7px; border: 1px solid #3a3a5a; border-radius: 6px; }
+  .footer { text-align: center; color: #555; font-size: 0.8rem; margin-top: 24px; padding: 16px 0; border-top: 1px solid #222; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="/index.html">홈</a>
+  <a href="/kr.html">🇰🇷 한국</a>
+  <a href="/us.html">🇺🇸 미국</a>
+  <a href="/surge-pre.html">🔥 프리</a>
+  <a href="/surge-live.html">🔥 본장</a>
+  <a href="/surge.html" style="background:#1a1a2e;">⚡ 실시간</a>
+</div>
+
+<h1>⚡ 실시간 급등주 분석</h1>
+<div class="timestamp" id="ts">버튼을 눌러 분석을 시작하세요</div>
+
+<button class="btn btn-primary" id="analyze-btn" onclick="runAnalysis()">
+  🔍 새로 분석
+</button>
+
+<div id="results" style="display:none;">
+  <div class="section">🔥 지금 급등 중 TOP 10</div>
+  <div id="surging"></div>
+
+  <div class="section">📈 장 마감 전 급등 예상 TOP 10</div>
+  <div id="predicted"></div>
+</div>
+
+<div id="loading" style="display:none;">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>30개 종목 실시간 분석 중...</div>
+    <div style="font-size:0.8rem;color:#666;margin-top:8px;">약 30~50초 소요</div>
+  </div>
+</div>
+
+<div class="footer">⚠️ 교육용 참고 자료이며 투자 권유가 아닙니다.</div>
+
+<script>
+const MEDALS = ['🥇', '🥈', '🥉'];
+const API_URL = '/api/surge';
+
+function changeClass(pct) {
+  return pct >= 0 ? 'change-pos' : 'change-neg';
+}
+
+function renderCards(items, scoreKey, notesKey) {
+  if (!items || items.length === 0) {
+    return '<div class="empty">해당 종목이 없습니다.</div>';
+  }
+  return items.map((r, i) => {
+    const medal = i < 3 ? `<span class="medal">${MEDALS[i]}</span>` : `${i + 1}.`;
+    const score = r[scoreKey] || r.score || 0;
+    const notes = (r[notesKey] || r.notes || [])
+      .map(n => `<div class="note">• ${n}</div>`).join('');
+    const shortBadge = r.short_pct > 0
+      ? `<span style="background:#7c3aed;color:#fff;font-size:0.72rem;padding:2px 7px;border-radius:10px;">공매도 ${r.short_pct}%</span>` : '';
+    const darkfina = `<div class="darkfina">
+      <a href="https://darkfina.crazyrabbit.co/darkpool/${r.ticker}" target="_blank">🌑 다크풀</a>
+      <a href="https://darkfina.crazyrabbit.co/short/${r.ticker}" target="_blank">📉 공매도</a>
+    </div>`;
+    return `<div class="card">
+      <div class="card-header">
+        <span class="ticker">${medal} ${r.name} (${r.ticker})</span>
+        <span class="score">+${score}</span>
+      </div>
+      <div class="price">$${r.price.toLocaleString()} <span class="${changeClass(r.change_pct)}">(${r.change_pct > 0 ? '+' : ''}${r.change_pct}%)</span> ${shortBadge}</div>
+      ${notes}
+      ${darkfina}
+    </div>`;
+  }).join('');
+}
+
+async function runAnalysis() {
+  const btn = document.getElementById('analyze-btn');
+  const loading = document.getElementById('loading');
+  const results = document.getElementById('results');
+
+  btn.disabled = true;
+  btn.textContent = '분석 중...';
+  loading.style.display = 'block';
+  results.style.display = 'none';
+
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    document.getElementById('ts').textContent = `최종 분석: ${data.timestamp}`;
+    document.getElementById('surging').innerHTML = renderCards(data.surging_now, 'score', 'notes');
+    document.getElementById('predicted').innerHTML = renderCards(data.predicted, 'pred_score', 'pred_notes');
+
+    results.style.display = 'block';
+  } catch (e) {
+    document.getElementById('ts').textContent = `❌ 분석 실패: ${e.message}`;
+  } finally {
+    loading.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '🔍 새로 분석';
+  }
+}
+</script>
+</body>
+</html>
