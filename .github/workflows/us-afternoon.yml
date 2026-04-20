@@ -1,9 +1,10 @@
-name: 🇺🇸 미국 주식 분석 + 급등 후보 (평일 오후 5:30)
+name: 🇺🇸 미국 주식 분석 + 급등 후보 (평일 오후 5시)
 
 on:
   schedule:
-    # 한국시간 평일 오후 5:30 = UTC 08:30
-    - cron: "30 8 * * 1-5"
+    # 한국시간 평일 오후 4:00 = UTC 07:00
+    # 4시에 시작해서 5시까지 분석+전송 완료
+    - cron: "0 7 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -37,16 +38,13 @@ jobs:
 
       - name: Deploy reports to GitHub Pages
         run: |
-          cd reports
-          # 기존 gh-pages에서 kr.html 보존
-          git init
+          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages-dir 2>/dev/null || mkdir gh-pages-dir
+          cp reports/*.html gh-pages-dir/ 2>/dev/null || true
+          cd gh-pages-dir
+          git init 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git
-          git fetch origin gh-pages || true
-          git checkout -b gh-pages
-          # 기존 KR 리포트가 있으면 가져오기
-          git checkout origin/gh-pages -- kr.html 2>/dev/null || true
+          git checkout -b gh-pages 2>/dev/null || true
           git add -A
-          git commit -m "Update US report $(date +%Y-%m-%d)"
-          git push -f origin gh-pages
+          git commit -m "Update US report $(date +%Y-%m-%d)" || echo "No changes"
+          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages

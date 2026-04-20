@@ -130,26 +130,59 @@ def _render_surge_cards(results: list[dict]) -> str:
     return html
 
 
-def generate_kr_report(date_str: str, alerts: list[dict], out_dir: str = "reports") -> str:
+def _render_weekly_cards(results: list[dict], market: str, top_n: int = 10) -> str:
+    """주간 분석 카드 (월요일용)."""
+    filtered = [r for r in results if r["market"] == market.upper()][:top_n]
+    if not filtered:
+        return ""
+    medals = ["🥇", "🥈", "🥉"]
+    html = ""
+    for i, r in enumerate(filtered):
+        medal = medals[i] if i < 3 else f"{i+1}."
+        price_fmt = f"${r['last_close']:,.2f}" if r["market"] == "US" else f"{r['last_close']:,.0f}"
+        notes_html = "".join(f'<div class="note">• {n}</div>' for n in r["notes"][:3])
+        darkfina = _darkfina_links(r["ticker"], r["market"]) if r["market"] == "US" else ""
+        html += f"""
+<div class="card">
+  <div class="card-header">
+    <span class="ticker"><span class="medal">{medal}</span> {r['name']} ({r['ticker']})</span>
+    <span class="score-pos">+{r['score']}</span>
+  </div>
+  <div class="price">{price_fmt} | 주간 <span class="{_change_class(r['weekly_change'])}">{r['weekly_change']:+.1f}%</span> | 상승 {r['up_days']}일 / 하락 {r['down_days']}일</div>
+  {notes_html}
+  {darkfina}
+</div>"""
+    return html
+
+
+def generate_kr_report(date_str: str, alerts: list[dict], out_dir: str = "reports", weekly_results: list[dict] | None = None) -> str:
     """한국 주식 HTML 리포트 생성."""
     Path(out_dir).mkdir(exist_ok=True)
-    content = _render_analysis_cards(alerts)
+    content = '<div class="section">기술적 분석</div>' + _render_analysis_cards(alerts)
+    if weekly_results:
+        weekly_html = _render_weekly_cards(weekly_results, "KR")
+        if weekly_html:
+            content += f'<div class="section">📅 주간 리뷰 + 금주 강세 예상</div>{weekly_html}'
     html = TEMPLATE.format(
         title=f"📊 {date_str} 한국 주식 분석",
         timestamp=f"생성: {date_str}",
-        content=f'<div class="section">기술적 분석</div>{content}',
+        content=content,
     )
     path = Path(out_dir) / "kr.html"
     path.write_text(html, encoding="utf-8")
     return f"{PAGES_URL}/kr.html"
 
 
-def generate_us_report(date_str: str, alerts: list[dict], surge_results: list[dict], out_dir: str = "reports") -> str:
+def generate_us_report(date_str: str, alerts: list[dict], surge_results: list[dict], out_dir: str = "reports", weekly_results: list[dict] | None = None) -> str:
     """미국 주식 HTML 리포트 생성."""
     Path(out_dir).mkdir(exist_ok=True)
     analysis_html = _render_analysis_cards(alerts)
     surge_html = _render_surge_cards(surge_results)
     content = f'<div class="section">기술적 분석</div>{analysis_html}<div class="section">🔍 급등 후보 TOP {len(surge_results)}</div>{surge_html}'
+    if weekly_results:
+        weekly_html = _render_weekly_cards(weekly_results, "US")
+        if weekly_html:
+            content += f'<div class="section">📅 주간 리뷰 + 금주 강세 예상</div>{weekly_html}'
     html = TEMPLATE.format(
         title=f"📊 {date_str} 미국 주식 분석",
         timestamp=f"생성: {date_str}",

@@ -2,8 +2,9 @@ name: 🇰🇷 한국 주식 분석 (평일 오전 7시)
 
 on:
   schedule:
-    # 한국시간 평일 오전 7:00 = UTC 22:00 (전날)
-    - cron: "0 22 * * 0-4"
+    # 한국시간 평일 오전 6:00 = UTC 21:00 (전날)
+    # 6시에 시작해서 7시까지 분석+전송 완료
+    - cron: "0 21 * * 0-4"
   workflow_dispatch:
 
 permissions:
@@ -37,11 +38,13 @@ jobs:
 
       - name: Deploy reports to GitHub Pages
         run: |
-          cd reports
-          git init
+          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages-dir 2>/dev/null || mkdir gh-pages-dir
+          cp reports/*.html gh-pages-dir/ 2>/dev/null || true
+          cd gh-pages-dir
+          git init 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b gh-pages
+          git checkout -b gh-pages 2>/dev/null || true
           git add -A
-          git commit -m "Update KR report $(date +%Y-%m-%d)"
+          git commit -m "Update KR report $(date +%Y-%m-%d)" || echo "No changes"
           git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages

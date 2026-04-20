@@ -5,6 +5,7 @@
 2. 지표 계산 및 신호 분석
 3. 임계값을 넘는 종목만 카카오톡 '나에게' 로 알림 전송
 4. HTML 리포트 생성 (GitHub Pages 배포용)
+5. 월요일엔 주간 흐름 분석 + 강세 예상 종목 추가
 
 실행:
     python main.py                # 임계값 통과 종목만 알림
@@ -30,6 +31,11 @@ from signals import analyze
 from kakao_notifier import send_kakao, format_report
 from surge_screener import run_surge_screen, format_surge_report
 from report_generator import generate_kr_report, generate_us_report, generate_index
+from weekly_analysis import run_weekly_analysis, format_weekly_report
+
+
+def _is_monday() -> bool:
+    return datetime.now().weekday() == 0
 
 
 def run(send_all: bool = False, dry_run: bool = False, market: str | None = None) -> int:
@@ -83,24 +89,41 @@ def run(send_all: bool = False, dry_run: bool = False, market: str | None = None
         surge_results = run_surge_screen(config)
         surge_msg = "\n\n" + format_surge_report(today, surge_results)
 
+    # 월요일: 주간 분석 추가
+    weekly_msg = ""
+    weekly_results = []
+    if _is_monday():
+        print(f"\n{'='*60}")
+        print("📅 월요일 주간 분석 실행 중...\n")
+        weekly_results = run_weekly_analysis(config, market)
+        if market:
+            weekly_msg = "\n\n" + format_weekly_report(today, weekly_results, market)
+        else:
+            kr_weekly = [r for r in weekly_results if r["market"] == "KR"]
+            us_weekly = [r for r in weekly_results if r["market"] == "US"]
+            if kr_weekly:
+                weekly_msg += "\n\n" + format_weekly_report(today, kr_weekly, "kr")
+            if us_weekly:
+                weekly_msg += "\n\n" + format_weekly_report(today, us_weekly, "us")
+
     # HTML 리포트 생성
     report_url = ""
     if market == "kr":
-        report_url = generate_kr_report(today, alerts)
+        report_url = generate_kr_report(today, alerts, weekly_results=weekly_results)
         generate_index(today)
         print(f"\n📄 HTML 리포트: {report_url}")
     elif market == "us":
-        report_url = generate_us_report(today, alerts, surge_results)
+        report_url = generate_us_report(today, alerts, surge_results, weekly_results=weekly_results)
         generate_index(today)
         print(f"\n📄 HTML 리포트: {report_url}")
     else:
         kr_alerts = [a for a in alerts if a["market"] == "KR"]
         us_alerts = [a for a in alerts if a["market"] == "US"]
-        generate_kr_report(today, kr_alerts)
-        report_url = generate_us_report(today, us_alerts, surge_results)
+        generate_kr_report(today, kr_alerts, weekly_results=[r for r in weekly_results if r["market"] == "KR"])
+        report_url = generate_us_report(today, us_alerts, surge_results, weekly_results=[r for r in weekly_results if r["market"] == "US"])
         generate_index(today)
 
-    message = format_report(today, alerts) + surge_msg
+    message = format_report(today, alerts) + surge_msg + weekly_msg
     print("\n" + "=" * 60)
     print(message)
     print("=" * 60 + "\n")
