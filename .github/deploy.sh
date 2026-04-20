@@ -25,3 +25,8 @@ git config user.email "github-actions[bot]@users.noreply.github.com"
 git add -A
 git commit -m "$COMMIT_MSG" || echo "No changes"
 git push -f "$REPO_URL" gh-pages
+
+# Vercel 재배포 (Vercel deploy hook이 설정된 경우)
+if [ -n "$VERCEL_DEPLOY_HOOK" ]; then
+  curl -s -X POST "$VERCEL_DEPLOY_HOOK" || echo "Vercel deploy hook failed"
+fi

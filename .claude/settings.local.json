@@ -13,7 +13,10 @@
       "WebFetch(domain:devtalk.kakao.com)",
       "WebFetch(domain:darkfina.crazyrabbit.co)",
       "Bash(python3 -c ':*)",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel --yes --prod)"
     ]
   }
 }

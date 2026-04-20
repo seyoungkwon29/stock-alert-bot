@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 import os
-PAGES_URL = os.getenv("PAGES_URL", "https://seyoungkwon29.github.io/stock-alert-bot")
+PAGES_URL = os.getenv("PAGES_URL", "https://trading-zerob.vercel.app")
 
 TEMPLATE = """\
 <!DOCTYPE html>

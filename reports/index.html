@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <title>📈 Stock Alert Bot</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,6 +31,9 @@
   .nav { display: flex; gap: 8px; margin-bottom: 16px; }
   .nav a { color: #60a5fa; text-decoration: none; font-size: 0.9rem; padding: 6px 12px; border: 1px solid #333; border-radius: 8px; }
   .nav a:hover { background: #1a1a2e; }
+  .darkfina { display: flex; gap: 6px; margin-top: 8px; }
+  .darkfina a { color: #a78bfa; text-decoration: none; font-size: 0.75rem; padding: 3px 8px; border: 1px solid #3a3a5a; border-radius: 6px; }
+  .darkfina a:hover { background: #2a2a4a; }
 </style>
 </head>
 <body>
@@ -33,17 +41,30 @@
   <a href="index.html">홈</a>
   <a href="kr.html">🇰🇷 한국</a>
   <a href="us.html">🇺🇸 미국</a>
+  <a href="surge-pre.html">🔥 급등주(프리)</a>
+  <a href="surge-live.html">🔥 급등주(본장)</a>
 </div>
 <h1>📈 Stock Alert Bot</h1>
-<div class="timestamp">최종 업데이트: 2026-04-18</div>
+<div class="timestamp">최종 업데이트: 2026-04-20</div>
 
 <div class="card">
   <a href="kr.html" style="color:#60a5fa;text-decoration:none;font-size:1.1rem;">🇰🇷 한국 주식 분석 →</a>
+  <div class="note">평일 오전 7시 업데이트</div>
 </div>
 <div class="card">
-  <a href="us.html" style="color:#60a5fa;text-decoration:none;font-size:1.1rem;">🇺🇸 미국 주식 분석 + 급등 후보 →</a>
+  <a href="us.html" style="color:#60a5fa;text-decoration:none;font-size:1.1rem;">🇺🇸 미국 주식 분석 →</a>
+  <div class="note">평일 오후 5시 업데이트</div>
+</div>
+<div class="card">
+  <a href="surge-pre.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 (프리마켓) →</a>
+  <div class="note">평일 오후 6시 · 7시 시간대별 순위</div>
+</div>
+<div class="card">
+  <a href="surge-live.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 (본장) →</a>
+  <div class="note">평일 오후 11시 업데이트</div>
 </div>
 
 <div class="footer">⚠️ 교육용 참고 자료이며 투자 권유가 아닙니다.</div>
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>
