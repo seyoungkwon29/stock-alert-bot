@@ -1,9 +1,8 @@
-name: 🔥 급등주 2차 흐름 업데이트 (평일 오후 7시)
+name: 🔥 급등주(프리) 2차 (평일 오후 7시)
 
 on:
   schedule:
     # 한국시간 평일 오후 6:30 = UTC 09:30
-    # 6:30에 시작해서 7시까지 분석+전송 완료
     - cron: "30 9 * * 1-5"
   workflow_dispatch:
 
@@ -33,18 +32,16 @@ jobs:
           KAKAO_REFRESH_TOKEN=${{ secrets.KAKAO_REFRESH_TOKEN }}
           EOF
 
-      - name: Run surge screener phase 2
-        run: python main.py --surge --surge-phase 2
-
-      - name: Deploy reports to GitHub Pages
+      - name: Restore previous slots
         run: |
           git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages-dir 2>/dev/null || mkdir gh-pages-dir
-          cp reports/*.html gh-pages-dir/ 2>/dev/null || true
-          cd gh-pages-dir
-          git init 2>/dev/null || true
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b gh-pages 2>/dev/null || true
-          git add -A
-          git commit -m "Update surge2 report $(date +%Y-%m-%d)" || echo "No changes"
-          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages
+          mkdir -p reports
+          cp gh-pages-dir/surge_pre_slots.json reports/ 2>/dev/null || true
+
+      - name: Run premarket surge screener
+        run: python main.py --surge-pre
+
+      - name: Deploy reports to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/deploy.sh "Update surge-pre report $(date +%Y-%m-%d_%H%M)"

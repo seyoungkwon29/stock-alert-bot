@@ -29,8 +29,12 @@ from data_fetcher import fetch
 from indicators import compute_all
 from signals import analyze
 from kakao_notifier import send_kakao, format_report
-from surge_screener import run_surge_screen, format_surge_report
-from report_generator import generate_kr_report, generate_us_report, generate_surge_report, generate_index
+from pathlib import Path
+from report_generator import (
+    generate_kr_report, generate_us_report,
+    generate_surge_pre_report, generate_surge_live_report, generate_index,
+)
+from realtime_screener import run_realtime_screen, format_realtime_report
 from weekly_analysis import run_weekly_analysis, format_weekly_report
 
 
@@ -154,26 +158,72 @@ def test_kakao() -> int:
     return 0 if ok else 1
 
 
-def run_surge(dry_run: bool = False, top_n: int | None = None, phase: int = 1) -> int:
-    """급등 후보 스크리너 실행 (phase 1: 1차 분석, phase 2: 2차 흐름 업데이트)."""
+def run_surge_pre(dry_run: bool = False, top_n: int | None = None) -> int:
+    """급등주(프리마켓) 스크리너. 시간대별로 누적 저장."""
     load_dotenv()
     today = datetime.now().strftime("%Y-%m-%d")
-    label = "1차 분석" if phase == 1 else "2차 흐름 업데이트"
+    now_ts = datetime.now().strftime("%H:%M")
+    top_n = top_n or 10
 
-    print(f"🔍 {today} 급등주 {label} 시작\n")
-    results = run_surge_screen(config, top_n)
+    print(f"🔥 {today} {now_ts} 프리마켓 급등주 분석 시작\n")
+    results = run_realtime_screen(config, mode="premarket", top_n=top_n)
 
-    # HTML 리포트 생성
-    report_url = generate_surge_report(today, results, phase=phase)
+    # 기존 시간대 데이터 로드 (있으면)
+    import json
+    slots_file = Path("reports/surge_pre_slots.json")
+    slots_file.parent.mkdir(exist_ok=True)
+    if slots_file.exists():
+        existing = json.loads(slots_file.read_text())
+        # 오늘 날짜가 다르면 초기화
+        if existing.get("date") != today:
+            existing = {"date": today, "slots": []}
+    else:
+        existing = {"date": today, "slots": []}
+
+    # 현재 분석 결과를 슬롯에 추가
+    slot_data = {
+        "time": now_ts,
+        "results": [{k: v for k, v in r.items() if k != "notes"} | {"notes": r.get("notes", [])} for r in results],
+    }
+    existing["slots"].append(slot_data)
+    slots_file.write_text(json.dumps(existing, ensure_ascii=False, default=str))
+
+    # HTML 리포트 생성 (모든 시간대 포함)
+    report_url = generate_surge_pre_report(today, existing["slots"])
     generate_index(today)
     print(f"\n📄 HTML 리포트: {report_url}")
 
-    message = format_surge_report(today, results)
-    # 헤더를 phase에 맞게 수정
-    message = message.replace(
-        f"급등 후보 TOP {len(results)}",
-        f"급등주 {label} TOP {len(results)}"
-    )
+    # 카카오 메시지
+    message = format_realtime_report(today, results, mode="premarket", timestamp=now_ts)
+    print("\n" + "=" * 60)
+    print(message)
+    print("=" * 60 + "\n")
+
+    if dry_run:
+        print("[dry-run] 카카오 전송 생략")
+        return 0
+
+    ok = send_kakao(message, link_url=report_url)
+    print("✅ 전송 성공" if ok else "❌ 전송 실패")
+    return 0 if ok else 1
+
+
+def run_surge_live(dry_run: bool = False, top_n: int | None = None) -> int:
+    """급등주(본장) 스크리너."""
+    load_dotenv()
+    today = datetime.now().strftime("%Y-%m-%d")
+    top_n = top_n or 10
+
+    print(f"🔥 {today} 본장 급등주 분석 시작\n")
+    results = run_realtime_screen(config, mode="intraday", top_n=top_n)
+
+    # HTML 리포트 생성
+    report_url = generate_surge_live_report(today, results)
+    generate_index(today)
+    print(f"\n📄 HTML 리포트: {report_url}")
+
+    # 카카오 메시지
+    message = format_realtime_report(today, results, mode="intraday")
     print("\n" + "=" * 60)
     print(message)
     print("=" * 60 + "\n")
@@ -192,13 +242,15 @@ if __name__ == "__main__":
     parser.add_argument("--all", action="store_true", help="임계값과 관계없이 전체 결과 전송")
     parser.add_argument("--dry-run", action="store_true", help="전송 없이 콘솔만")
     parser.add_argument("--test", action="store_true", help="더미 메시지로 카카오 테스트")
-    parser.add_argument("--surge", action="store_true", help="급등 후보 스크리너만")
-    parser.add_argument("--surge-phase", type=int, choices=[1, 2], default=1, help="급등주 분석 단계 (1=1차, 2=2차)")
+    parser.add_argument("--surge-pre", action="store_true", help="급등주(프리마켓) 스크리너")
+    parser.add_argument("--surge-live", action="store_true", help="급등주(본장) 스크리너")
     parser.add_argument("--top", type=int, default=None, help="급등 후보 상위 N개 (기본 10)")
     parser.add_argument("--market", choices=["kr", "us"], help="한국(kr) 또는 미국(us) 종목만")
     args = parser.parse_args()
     if args.test:
         sys.exit(test_kakao())
-    if args.surge:
-        sys.exit(run_surge(dry_run=args.dry_run, top_n=args.top, phase=args.surge_phase))
+    if args.surge_pre:
+        sys.exit(run_surge_pre(dry_run=args.dry_run, top_n=args.top))
+    if args.surge_live:
+        sys.exit(run_surge_live(dry_run=args.dry_run, top_n=args.top))
     sys.exit(run(send_all=args.all, dry_run=args.dry_run, market=args.market))

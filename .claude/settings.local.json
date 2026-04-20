@@ -11,7 +11,9 @@
       "Bash(gh api:*)",
       "WebFetch(domain:developers.kakao.com)",
       "WebFetch(domain:devtalk.kakao.com)",
-      "WebFetch(domain:darkfina.crazyrabbit.co)"
+      "WebFetch(domain:darkfina.crazyrabbit.co)",
+      "Bash(python3 -c ':*)",
+      "Bash(npm list:*)"
     ]
   }
 }

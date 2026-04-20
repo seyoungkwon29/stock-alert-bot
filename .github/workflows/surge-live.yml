@@ -1,10 +1,10 @@
-name: 🇰🇷 한국 주식 분석 (평일 오전 7시)
+name: 🔥 급등주(본장) (평일 오후 11시)
 
 on:
   schedule:
-    # 한국시간 평일 오전 6:00 = UTC 21:00 (전날)
-    # 6시에 시작해서 7시까지 분석+전송 완료
-    - cron: "0 21 * * 0-4"
+    # 한국시간 평일 오후 10:50 = UTC 13:50
+    # 10:50에 분석 시작해서 11시까지 전송
+    - cron: "50 13 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -33,10 +33,10 @@ jobs:
           KAKAO_REFRESH_TOKEN=${{ secrets.KAKAO_REFRESH_TOKEN }}
           EOF
 
-      - name: Run Korean stock analysis
-        run: python main.py --all --market kr
+      - name: Run intraday surge screener
+        run: python main.py --surge-live
 
       - name: Deploy reports to GitHub Pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bash .github/deploy.sh "Update KR report $(date +%Y-%m-%d)"
+        run: bash .github/deploy.sh "Update surge-live report $(date +%Y-%m-%d)"

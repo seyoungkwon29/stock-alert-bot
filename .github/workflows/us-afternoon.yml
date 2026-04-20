@@ -37,14 +37,6 @@ jobs:
         run: python main.py --all --market us
 
       - name: Deploy reports to GitHub Pages
-        run: |
-          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages-dir 2>/dev/null || mkdir gh-pages-dir
-          cp reports/*.html gh-pages-dir/ 2>/dev/null || true
-          cd gh-pages-dir
-          git init 2>/dev/null || true
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b gh-pages 2>/dev/null || true
-          git add -A
-          git commit -m "Update US report $(date +%Y-%m-%d)" || echo "No changes"
-          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/seyoungkwon29/stock-alert-bot.git gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/deploy.sh "Update US report $(date +%Y-%m-%d)"

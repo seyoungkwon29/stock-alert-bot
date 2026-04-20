@@ -10,7 +10,8 @@ import os
 from pathlib import Path
 
 
-PAGES_URL = "https://seyoungkwon29.github.io/stock-alert-bot"
+import os
+PAGES_URL = os.getenv("PAGES_URL", "https://seyoungkwon29.github.io/stock-alert-bot")
 
 TEMPLATE = """\
 <!DOCTYPE html>
@@ -18,6 +19,11 @@ TEMPLATE = """\
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <title>{title}</title>
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
@@ -51,13 +57,14 @@ TEMPLATE = """\
   <a href="index.html">홈</a>
   <a href="kr.html">🇰🇷 한국</a>
   <a href="us.html">🇺🇸 미국</a>
-  <a href="surge1.html">🔥 급등주1</a>
-  <a href="surge2.html">🔥 급등주2</a>
+  <a href="surge-pre.html">🔥 급등주(프리)</a>
+  <a href="surge-live.html">🔥 급등주(본장)</a>
 </div>
 <h1>{title}</h1>
 <div class="timestamp">{timestamp}</div>
 {content}
 <div class="footer">⚠️ 교육용 참고 자료이며 투자 권유가 아닙니다.</div>
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>
 """
@@ -195,21 +202,64 @@ def generate_us_report(date_str: str, alerts: list[dict], surge_results: list[di
     return f"{PAGES_URL}/us.html"
 
 
-def generate_surge_report(date_str: str, surge_results: list[dict], phase: int = 1, out_dir: str = "reports") -> str:
-    """급등주 HTML 리포트 생성 (phase 1 or 2)."""
+def _render_realtime_cards(results: list[dict]) -> str:
+    """실시간 급등주 카드."""
+    if not results:
+        return '<div class="card"><p>데이터 수집 중이거나 해당 종목이 없습니다.</p></div>'
+    medals = ["🥇", "🥈", "🥉"]
+    html = ""
+    for i, r in enumerate(results):
+        medal = medals[i] if i < 3 else f"{i+1}."
+        short_html = f'<span class="short-badge">공매도 {r["short_pct"]:.1f}%</span>' if r.get("short_pct", 0) > 0 else ""
+        notes_html = "".join(f'<div class="note">• {n}</div>' for n in r.get("notes", []))
+        darkfina = _darkfina_links(r["ticker"], "US")
+        html += f"""
+<div class="card">
+  <div class="card-header">
+    <span class="ticker"><span class="medal">{medal}</span> {r['name']} ({r['ticker']})</span>
+    <span class="score-pos">+{r['score']}</span>
+  </div>
+  <div class="price">${r['price']:,.2f} <span class="{_change_class(r['change_pct'])}">({r['change_pct']:+.1f}%)</span> {short_html}</div>
+  {notes_html}
+  {darkfina}
+</div>"""
+    return html
+
+
+def generate_surge_pre_report(date_str: str, time_slots: list[dict], out_dir: str = "reports") -> str:
+    """급등주(프리) HTML 리포트 생성. time_slots: [{"time": "18:00", "results": [...]}]"""
     Path(out_dir).mkdir(exist_ok=True)
-    label = "1차 분석" if phase == 1 else "2차 흐름 업데이트"
-    surge_html = _render_surge_cards(surge_results)
-    content = f'<div class="section">🔥 급등 예상 TOP {len(surge_results)} ({label})</div>{surge_html}'
+    content = ""
+    for slot in time_slots:
+        ts = slot["time"]
+        results = slot["results"]
+        cards = _render_realtime_cards(results)
+        content += f'<div class="section">🔥 {ts} 프리마켓 분석 (TOP {len(results)})</div>{cards}'
+    if not time_slots:
+        content = '<div class="card"><p>아직 분석 데이터가 없습니다.</p></div>'
     html = TEMPLATE.format(
-        title=f"🔥 {date_str} 급등주 {label}",
+        title=f"🔥 {date_str} 급등주 (프리마켓)",
+        timestamp=f"최종 업데이트: {date_str}",
+        content=content,
+    )
+    path = Path(out_dir) / "surge-pre.html"
+    path.write_text(html, encoding="utf-8")
+    return f"{PAGES_URL}/surge-pre.html"
+
+
+def generate_surge_live_report(date_str: str, results: list[dict], out_dir: str = "reports") -> str:
+    """급등주(본장) HTML 리포트 생성."""
+    Path(out_dir).mkdir(exist_ok=True)
+    cards = _render_realtime_cards(results)
+    content = f'<div class="section">🔥 본장 급등주 TOP {len(results)}</div>{cards}'
+    html = TEMPLATE.format(
+        title=f"🔥 {date_str} 급등주 (본장)",
         timestamp=f"생성: {date_str}",
         content=content,
     )
-    filename = f"surge{phase}.html"
-    path = Path(out_dir) / filename
+    path = Path(out_dir) / "surge-live.html"
     path.write_text(html, encoding="utf-8")
-    return f"{PAGES_URL}/{filename}"
+    return f"{PAGES_URL}/surge-live.html"
 
 
 def generate_index(date_str: str, out_dir: str = "reports") -> None:
@@ -225,12 +275,12 @@ def generate_index(date_str: str, out_dir: str = "reports") -> None:
   <div class="note">평일 오후 5시 업데이트</div>
 </div>
 <div class="card">
-  <a href="surge1.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 1차 분석 →</a>
-  <div class="note">평일 오후 6시 업데이트</div>
+  <a href="surge-pre.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 (프리마켓) →</a>
+  <div class="note">평일 오후 6시 · 7시 시간대별 순위</div>
 </div>
 <div class="card">
-  <a href="surge2.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 2차 흐름 업데이트 →</a>
-  <div class="note">평일 오후 7시 업데이트</div>
+  <a href="surge-live.html" style="color:#f97316;text-decoration:none;font-size:1.1rem;">🔥 급등주 (본장) →</a>
+  <div class="note">평일 오후 11시 업데이트</div>
 </div>
 """
     html = TEMPLATE.format(
